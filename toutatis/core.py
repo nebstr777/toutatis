@@ -2,6 +2,7 @@ import argparse
 import requests
 from urllib.parse import quote_plus
 from json import dumps, decoder
+import re
 
 import phonenumbers
 from phonenumbers.phonenumberutil import (
@@ -29,7 +30,7 @@ def getUserId(username, sessionsId):
         return {"id": None, "error": "Rate limit"}
 
 
-def getInfo(search, sessionId, searchType="username" or "id"):
+def getInfo(search, sessionId, searchType="username"):
     if searchType == "username":
         data = getUserId(search, sessionId)
         if data["error"]:
@@ -94,7 +95,7 @@ def advanced_lookup(username):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(epilog="Example: toutatis -u vlad_leonov7 -s <sessionid>")
     parser.add_argument('-s', '--sessionid', help="Instagram session ID", required=True)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-u', '--username', help="One username")
@@ -102,6 +103,30 @@ def main():
     args = parser.parse_args()
 
     sessionsId = args.sessionid
+    # Common mistake: using the literal 'username' placeholder; give a helpful hint
+    if args.username and args.username.lower() == 'username':
+        print("It looks like you used the literal 'username' placeholder. Replace it with the real username.")
+        print("Example: toutatis -u vlad_leonov7 -s <your_sessionid_here>")
+        return
+
+    # Validate sessionid argument superficially to catch common user errors
+    def looks_like_username(s: str) -> bool:
+        return bool(re.match(r'^[A-Za-z0-9_.]+$', s)) and len(s) <= 30
+
+    def looks_like_sessionid(s: str) -> bool:
+        # sessionid commonly contains digits, colons, or URL-encoded chars; check for those patterns
+        return bool(re.search(r'[:%]|[0-9]{6,}', s)) and len(s) >= 8
+
+    if sessionsId.lower() in ('<sessionid>', '<instagramsessionid>'):
+        print("It looks like you left the sessionid placeholder. Replace it with your real sessionid cookie value.")
+        print("Example: toutatis -u vlad_leonov7 -s <your_sessionid_here>")
+        return
+
+    if looks_like_username(sessionsId) and not looks_like_sessionid(sessionsId):
+        print("The value passed to -s looks like a username (e.g., 'vlad_leonov'). Did you swap -u and -s?")
+        print("Correct usage: toutatis -u vlad_leonov7 -s <your_sessionid_here>")
+        return
+
     search_type = "id" if args.id else "username"
     search = args.id or args.username
     infos = getInfo(search, sessionsId, searchType=search_type)
@@ -120,7 +145,7 @@ def main():
         "Follower               : " + str(infos["follower_count"]) + " | Following : " + str(infos["following_count"]))
     print("Number of posts        : " + str(infos["media_count"]))
     # print("Number of tag in posts : "+str(infos["following_tag_count"]))
-    if infos["external_url"]:
+    if infos.get("external_url"):
         print("External url           : " + infos["external_url"])
     print("IGTV posts             : " + str(infos["total_igtv_videos"]))
     print("Biography              : " + (f"""\n{" " * 25}""").join(infos["biography"].split("\n")))
@@ -140,8 +165,8 @@ def main():
                 countrycode = region_code_for_country_code(pn.country_code)
                 country = pycountry.countries.get(alpha_2=countrycode)
                 phonenr = phonenr + " ({}) ".format(country.name)
-            except:  # except what ??
-                pass  # pass what ??
+            except phonenumbers.NumberParseException:
+                pass
             print("Public Phone number    : " + phonenr)
 
     other_infos = advanced_lookup(infos["username"])
@@ -168,4 +193,10 @@ def main():
             else:
                 print("No obfuscated phone found")
     print("-" * 24)
-    print("Profile Picture        : " + infos["hd_profile_pic_url_info"]["url"])
+    hd = infos.get("hd_profile_pic_url_info")
+    if hd and hd.get("url"):
+        print("Profile Picture        : " + hd["url"])
+
+        toutatis -u vlad_leonov7
+        
+

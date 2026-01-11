@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 
 
 setup(
+
     name='toutatis',
     version="1.31",
     packages=find_packages(),
@@ -16,5 +17,9 @@ setup(
     classifiers=[
         "Programming Language :: Python",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    ],
-)
+    ]
+
+
+
+toutatis -u v
+

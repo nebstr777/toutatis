@@ -27,8 +27,11 @@ python3 setup.py install
 ### Find information from a username
 
 ```
-toutatis -u username -s instagramsessionid
+# Replace placeholders with real values:
+toutatis -u vlad_leonov7 -s <instagramsessionid>
 ```
+
+> ⚠️ Common mistake: don't swap `-u` and `-s`. If your command looks like `toutatis -u username -s vlad_leonov`, you likely passed the username as the session id by mistake — use `-s <your_sessionid_here>` instead.
 
 ### Find information from an Instagram ID
 
@@ -58,6 +61,12 @@ Profile Picture        : https://scontent-X-X.cdninstagram.com/
 ```
 
 ## 📚 To retrieve the sessionID
+Follow these steps in your browser (must be logged in to Instagram):
+1. Open Instagram and sign in.
+2. Open Developer Tools (F12) → Application (Chrome) or Storage (Firefox).
+3. Under Cookies, select `https://www.instagram.com`, find the `sessionid` cookie and copy its value.
+4. Keep it private — it grants access to your logged-in session.
+
 ![](https://files.catbox.moe/1rfi6j.png)
 
 ## Thank you to :
